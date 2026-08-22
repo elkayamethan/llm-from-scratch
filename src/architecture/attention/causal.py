@@ -43,5 +43,6 @@ class CausalAttention(nn.Module):
             attention_scores_masked / self.d_out**0.5,
             dim=-1,
         )
+        attention_weights = self.dropout(attention_weights)
 
         return attention_weights @ values
