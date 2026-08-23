@@ -2,9 +2,9 @@ import torch
 from torch import nn, Tensor
 
 class GELU(nn.Module):
-    """approximated GELU activation function"""
+    """Approximated GELU activation function"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(self, x: Tensor) -> Tensor:

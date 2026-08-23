@@ -1,2 +1,4 @@
 snippets.py
-.vscode
+
+.vscode/
+__pycache__/

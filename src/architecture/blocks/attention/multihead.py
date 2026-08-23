@@ -11,7 +11,7 @@ class MultiHeadAttention(nn.Module):
             num_heads: int,
             context_length: int,
             *,
-            dropout: float = 0.5,
+            drop_rate: float = 0.5,
             kqv_bias: bool = False,
     ) -> None:
         super().__init__() 
@@ -29,7 +29,7 @@ class MultiHeadAttention(nn.Module):
         self.W_v = nn.Linear(in_features=d_in, out_features=d_out, bias=kqv_bias)
         self.final_proj = nn.Linear(in_features=d_out, out_features=d_out)
 
-        self.dropout = nn.Dropout(p=dropout)
+        self.dropout = nn.Dropout(p=drop_rate)
 
         self.mask: Tensor
         self.register_buffer(
