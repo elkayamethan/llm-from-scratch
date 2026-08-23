@@ -2,7 +2,7 @@ from torch import nn, Tensor
 from architecture.blocks.activation import GELU
 from architecture.blocks.attention import MultiHeadAttention
 from architecture.blocks.normalization import LayerNorm
-from common.config.schemas import TransformerConfig
+from common.config import TransformerConfig
 
 
 class Transformer(nn.Module):
@@ -15,20 +15,20 @@ class Transformer(nn.Module):
         super().__init__()
 
         self.attention = MultiHeadAttention(
-            d_in=cfg.embedding_dimension,
-            d_out=cfg.embedding_dimension,
+            d_in=cfg.embedding_dim,
+            d_out=cfg.embedding_dim,
             context_length=cfg.context_length,
             num_heads=cfg.n_heads,
             drop_rate=cfg.drop_rate,
             kqv_bias=cfg.kqv_bias,
         )
         self.ff = nn.Sequential(
-            nn.Linear(cfg.embedding_dimension, 4 * cfg.embedding_dimension),
+            nn.Linear(cfg.embedding_dim, 4 * cfg.embedding_dim),
             GELU(),
-            nn.Linear(4 * cfg.embedding_dimension, cfg.embedding_dimension),
+            nn.Linear(4 * cfg.embedding_dim, cfg.embedding_dim),
         )
-        self.norm1 = LayerNorm(cfg.embedding_dimension)
-        self.norm2 = LayerNorm(cfg.embedding_dimension)
+        self.norm1 = LayerNorm(cfg.embedding_dim)
+        self.norm2 = LayerNorm(cfg.embedding_dim)
         self.dropout = nn.Dropout(cfg.drop_rate)
 
     def forward(self, x: Tensor) -> Tensor:
