@@ -22,9 +22,9 @@ class GPT(nn.Module):
         self.final_norm = LayerNorm(cfg.embedding_dim)
         self.out = nn.Linear(cfg.embedding_dim, cfg.vocab_size, bias=False)
 
-    def forward(self, x: Tensor) -> Tensor:
-        tok_embeds = self.token_embedding(x)
-        pos_embeds = self.positional_embedding(torch.arange(x.shape[1], device=x.device))
+    def forward(self, idx: Tensor) -> Tensor:
+        tok_embeds = self.token_embedding(idx)
+        pos_embeds = self.positional_embedding(torch.arange(idx.shape[1], device=idx.device))
 
         x = tok_embeds + pos_embeds
         x = self.embedding_dropout(x)
