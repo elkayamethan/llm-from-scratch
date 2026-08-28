@@ -11,7 +11,7 @@ class MultiHeadAttention(nn.Module):
             num_heads: int,
             context_length: int,
             *,
-            drop_rate: float = 0.5,
+            drop_rate: float = 0.0,
             kqv_bias: bool = False,
     ) -> None:
         super().__init__() 
