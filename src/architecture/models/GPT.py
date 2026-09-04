@@ -1,7 +1,7 @@
 import torch
 
 from torch import nn, Tensor
-from common.config import GPTConfig
+from common.config.schemas import GPTConfig
 from architecture.blocks import Transformer
 from architecture.blocks.normalization import LayerNorm
 

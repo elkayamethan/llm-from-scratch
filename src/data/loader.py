@@ -22,6 +22,7 @@ def create_pretraining_dataloaders(
         train_stride: int,
         batch_size: int,
         num_workers: int = 0,
+        pin_memory: bool = False,
         train_generator: torch.Generator | None = None,
 ) -> tuple[DataLoader, DataLoader]:
     """Splits corpus and returns (training_dataloader, validation_dataloader)"""
@@ -45,6 +46,7 @@ def create_pretraining_dataloaders(
         shuffle=True,
         drop_last=True,
         num_workers=num_workers,
+        pin_memory=pin_memory,
         generator=train_generator,
     )
     val_dataloader = DataLoader(
@@ -53,6 +55,7 @@ def create_pretraining_dataloaders(
         shuffle=False,
         drop_last=False,
         num_workers=num_workers,
+        pin_memory=pin_memory,
     )
 
     return train_dataloader, val_dataloader

@@ -12,7 +12,7 @@ def top_k_filter(logits: Tensor, k: int | None) -> Tensor:
     return torch.where(logits < threshold, float('-inf'), logits)
 
 
-def apply_temperature(logits: Tensor, temperature: float = 1.0):
+def apply_temperature(logits: Tensor, temperature: float = 1.0) -> Tensor:
     """Apply temperature scaling to logits"""
 
     if temperature < 0:

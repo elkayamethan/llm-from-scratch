@@ -2,7 +2,7 @@ from torch import nn, Tensor
 from architecture.blocks.activation import GELU
 from architecture.blocks.attention import MultiHeadAttention
 from architecture.blocks.normalization import LayerNorm
-from common.config import TransformerConfig
+from common.config.schemas import TransformerConfig
 
 
 class Transformer(nn.Module):
