@@ -1,3 +1,1 @@
-from common.device import resolve_device
 
-__all__ = ["resolve_device"]

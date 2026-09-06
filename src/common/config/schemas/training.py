@@ -11,6 +11,7 @@ class TrainingConfig(BaseModel):
     warmup_steps: int = Field(ge=0)
     weight_decay: float = Field(ge=0)
     grad_clip_norm: float | None = Field(gt=0, default=1.0)
+    use_bf16: bool = True
     eval_freq: int = Field(gt=0)
     eval_batches: int = Field(gt=0)
 
