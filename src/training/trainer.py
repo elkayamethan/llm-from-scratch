@@ -13,12 +13,16 @@ from typing import Callable
 def _as_eval_loader(dataloader: DataLoader) -> DataLoader:
     """To avoid drawing from a dataloader's generator"""
 
+    batch_size = dataloader.batch_size or getattr(dataloader.batch_sampler, "batch_size", None)
+    if batch_size is None:
+        raise ValueError("Dataloader must have a batch_size")
+
     eval_dataloader = DataLoader(
         dataloader.dataset, 
         shuffle=False, 
-        batch_size=dataloader.batch_size, 
+        batch_size=batch_size,
         num_workers=dataloader.num_workers, 
-        pin_memory=dataloader.pin_memory
+        pin_memory=dataloader.pin_memory,
     )
 
     return eval_dataloader
@@ -42,7 +46,7 @@ def train(
             train_loss -> list that contains the training loss in every eval step (one entry per eval step).
             val_loss -> list that contains the validation loss in every eval step (one entry per eval step).
             lr -> list that contains the global learning rate in each global step (one entry per optimizer step).
-            grad_norm -> list that contains 'torch.nn.utils.get_total_norm' in each global step (one entry per optimizer step).
+            grad_norm -> list that contains the total norm in each global step (one entry per optimizer step).
     """
 
     total_steps = len(train_dataloader) * cfg.n_epochs
@@ -95,9 +99,10 @@ def train(
             with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=autocast_enabled):
                 loss = batch_loss(model, x, y)
             loss.backward()
+            total_norm = nn.utils.get_total_norm([p.grad for p in model.parameters() if p.grad is not None])
             if cfg.grad_clip_norm is not None:
-                total_norm = nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip_norm)
-                grad_norms.append(total_norm.item())
+                nn.utils.clip_grads_with_norm_(model.parameters(), cfg.grad_clip_norm, total_norm)
+            grad_norms.append(total_norm.item())
             optimizer.step()
             global_step += 1
 

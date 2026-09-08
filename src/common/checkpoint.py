@@ -83,7 +83,7 @@ def load_checkpoint(
 
     if generator is not None:
         generator_state = checkpoint.pop("generator_state", None)
-        if checkpoint.get("generator_state") is None:
+        if generator_state is None:
             raise ValueError(f"Checkpoint holds no generator state, path: {path}")
         generator.set_state(generator_state)
 
