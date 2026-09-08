@@ -1,7 +1,7 @@
 import torch
 from torch import nn, Tensor
 
-# NOTE: Has been made obsolete by MultiHeadAttention
+# NOTE: Has been made obsolete by MultiHeadAttention, kept as reference
 class CausalAttention(nn.Module):
     """A single-head causal attention module with dropout"""
 

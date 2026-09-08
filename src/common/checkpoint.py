@@ -19,8 +19,15 @@ def save_checkpoint(
     generator: torch.Generator | None = None,
     history: dict | None = None,
 ) -> None:
-    """Atomically saves a checkpoint to 'path' (parent dirs get created).
-    Note: Configs are stored as dumps + class name"""
+    """
+    Atomically saves a checkpoint to 'path' (parent dirs get created).
+    
+    Note: Configs are stored as dumps + class name.
+    Note: 'model' expects the original module, rather than a wrapped one (e.g the one created by 'torch.compile(model)')
+    """
+
+    if hasattr(model, "_orig_mod"):
+        raise ValueError(f"model must be the original module, not a compiled wrapper, received: {type(model).__name__}")
 
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_name(path.name + ".tmp")
@@ -56,12 +63,18 @@ def load_checkpoint(
     generator: torch.Generator | None = None,
     map_location: str | torch.device = "cpu",
 ) -> dict:
-    """Restores 'model' (and 'optimizer'/'generator') in place from the checkpoint at 'path',
+    """
+    Restores 'model' (and 'optimizer'/'generator') in place from the checkpoint at 'path',
     and returns the rest of it: configs as dumps, global_step, epoch, history.
-    Note: optimizer's saved hyperparameters override the original ones"""
+    
+    Note: optimizer's saved hyperparameters override the original ones.
+    Note: 'model' expects the original module, rather than a wrapped one (e.g the one created by 'torch.compile(model)')
+    """
 
     if not path.is_file():
         raise FileNotFoundError(f"No checkpoint found at path: {path}")
+    if hasattr(model, "_orig_mod"):
+        raise ValueError(f"model must be the original module, not a compiled wrapper, received: {type(model).__name__}")
 
     checkpoint: dict = torch.load(path, map_location=map_location)
 

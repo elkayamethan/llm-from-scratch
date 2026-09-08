@@ -38,7 +38,7 @@ def train(
 ) -> dict[str, list[float | int]]:
     """
     Trains model on current device, evaluates loss on both dataloaders every 'cfg.eval_freq' optimizer steps,
-    learning rate is overwritten on every step - governed by cfg's lr-related params.
+    learning rate is overwritten on every optimizer step - governed by cfg's lr-related params.
 
     Returns:
         dict[str, list[float | int]] containing:
@@ -47,9 +47,14 @@ def train(
             val_loss -> list that contains the validation loss in every eval step (one entry per eval step).
             lr -> list that contains the global learning rate in each global step (one entry per optimizer step).
             grad_norm -> list that contains the total norm in each global step (one entry per optimizer step).
+    
+    Note: in cases where the number of batches in train_dataloader is not a multiple of grad_accum_steps the last micro-batch is dropped.
     """
 
-    total_steps = len(train_dataloader) * cfg.n_epochs
+    steps_per_epoch = len(train_dataloader) // cfg.grad_accum_steps
+    if steps_per_epoch < 1:
+        raise ValueError(f"number of steps per epoch must be at least 1, received: len(train_dataloader)={len(train_dataloader)}, grad_accum_steps={cfg.grad_accum_steps}")
+    total_steps = steps_per_epoch * cfg.n_epochs
     if cfg.warmup_steps >= total_steps:
         raise ValueError(f"'warmup steps' < 'total optimizer steps' must hold, received: warmup_steps={cfg.warmup_steps}, total_steps={total_steps}")
 
@@ -66,8 +71,18 @@ def train(
     eval_train_dataloader = _as_eval_loader(train_dataloader)
     eval_val_dataloader = _as_eval_loader(val_dataloader)
     def record_eval(step: int) -> None:
-        train_loss = dataloader_loss(model, eval_train_dataloader, max_batches=cfg.eval_batches)
-        val_loss = dataloader_loss(model, eval_val_dataloader, max_batches=cfg.eval_batches)
+        train_loss = dataloader_loss(
+            model,
+            eval_train_dataloader, 
+            max_batches=cfg.eval_batches,
+            autocast_dtype=torch.bfloat16 if autocast_enabled else None,
+        )
+        val_loss = dataloader_loss(
+            model,
+            eval_val_dataloader, 
+            max_batches=cfg.eval_batches,
+            autocast_dtype=torch.bfloat16 if autocast_enabled else None,
+        )
 
         train_losses.append(train_loss)
         val_losses.append(val_loss)
@@ -81,9 +96,8 @@ def train(
     record_eval(global_step)
     for _ in range(cfg.n_epochs):
         model.train()
-        for x,y in train_dataloader:
-            x,y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
-
+        batches = iter(train_dataloader)
+        for _ in range(steps_per_epoch):
             lr = lr_at_step(
                 global_step, 
                 max_lr=cfg.max_lr, 
@@ -96,16 +110,21 @@ def train(
                 group["lr"] = lr
 
             optimizer.zero_grad()
-            with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=autocast_enabled):
-                loss = batch_loss(model, x, y)
-            loss.backward()
+            for _ in range(cfg.grad_accum_steps):
+                x,y = next(batches)
+                x,y = x.to(device, non_blocking=x.is_pinned()), y.to(device, non_blocking=y.is_pinned())
+
+                with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=autocast_enabled):
+                    loss = batch_loss(model, x, y) / cfg.grad_accum_steps
+                loss.backward()
+
             total_norm = nn.utils.get_total_norm([p.grad for p in model.parameters() if p.grad is not None])
             if cfg.grad_clip_norm is not None:
                 nn.utils.clip_grads_with_norm_(model.parameters(), cfg.grad_clip_norm, total_norm)
             grad_norms.append(total_norm.item())
+
             optimizer.step()
             global_step += 1
-
             if global_step % cfg.eval_freq == 0:
                 record_eval(global_step)
 

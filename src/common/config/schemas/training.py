@@ -14,6 +14,8 @@ class TrainingConfig(BaseModel):
     use_bf16: bool = True
     eval_freq: int = Field(gt=0)
     eval_batches: int = Field(gt=0)
+    grad_accum_steps: int = Field(gt=0, default=1)
+    compile: bool = False
 
     @model_validator(mode="after")
     def check_lr(self) -> "TrainingConfig":

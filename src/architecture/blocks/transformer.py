@@ -21,6 +21,7 @@ class Transformer(nn.Module):
             num_heads=cfg.n_heads,
             drop_rate=cfg.drop_rate,
             kqv_bias=cfg.kqv_bias,
+            attention_impl=cfg.attention_impl,
         )
         self.ff = nn.Sequential(
             nn.Linear(cfg.embedding_dim, 4 * cfg.embedding_dim),
