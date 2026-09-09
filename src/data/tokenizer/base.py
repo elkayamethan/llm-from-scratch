@@ -11,6 +11,11 @@ class Tokenizer(Protocol):
         """Number of unique token ids"""
         ...
 
+    @property
+    def eot_id(self) -> int:
+        "Token id that terminates a document"
+        ...
+
     def encode(self, text: str) -> list[int]:
         """Converts 'text' into a sequence of token ids"""
         ...
