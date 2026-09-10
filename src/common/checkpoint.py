@@ -4,25 +4,23 @@ import os
 from torch import nn
 from pathlib import Path
 from torch.optim import Optimizer
-from common.config.schemas import TransformerConfig, TrainingConfig
+from common.config.schemas import RunConfig
 
 
 def save_checkpoint(
-    path: Path, 
-    *, 
-    model: nn.Module, 
-    optimizer: Optimizer, 
-    global_step: int, 
+    path: Path,
+    *,
+    model: nn.Module,
+    optimizer: Optimizer,
+    global_step: int,
     epoch: int,
-    model_cfg: TransformerConfig, 
-    train_cfg: TrainingConfig,
-    generator: torch.Generator | None = None,
+    run_cfg: RunConfig,
     history: dict | None = None,
 ) -> None:
     """
     Atomically saves a checkpoint to 'path' (parent dirs get created).
-    
-    Note: Configs are stored as dumps + class name.
+
+    Note: The run config is stored as a JSON-mode dump plus its class name, never as a pickled object.
     Note: 'model' expects the original module, rather than a wrapped one (e.g the one created by 'torch.compile(model)')
     """
 
@@ -34,18 +32,14 @@ def save_checkpoint(
     try:
         torch.save(
             {
-                "model_cfg_class": type(model_cfg).__name__,
-                "model_cfg": model_cfg.model_dump(),
+                "run_cfg_class": type(run_cfg).__name__,
+                "run_cfg": run_cfg.model_dump(mode="json"),
                 "model_state_dict": model.state_dict(),
-
-                "train_cfg": train_cfg.model_dump(),
                 "optimizer_class": type(optimizer).__name__,
                 "optimizer_state_dict": optimizer.state_dict(),
                 "global_step": global_step,
                 "epoch": epoch,
                 "history": history,
-
-                "generator_state": generator.get_state() if generator is not None else None,
             },
             tmp_path,
         )
@@ -60,13 +54,12 @@ def load_checkpoint(
     *,
     model: nn.Module,
     optimizer: Optimizer | None = None,
-    generator: torch.Generator | None = None,
     map_location: str | torch.device = "cpu",
 ) -> dict:
     """
-    Restores 'model' (and 'optimizer'/'generator') in place from the checkpoint at 'path',
-    and returns the rest of it: configs as dumps, global_step, epoch, history.
-    
+    Restores 'model' (and 'optimizer') in place from the checkpoint at 'path',
+    and returns the rest of it: run config as a dump plus class name, global_step, epoch, history.
+
     Note: optimizer's saved hyperparameters override the original ones.
     Note: 'model' expects the original module, rather than a wrapped one (e.g the one created by 'torch.compile(model)')
     """
@@ -78,7 +71,7 @@ def load_checkpoint(
 
     checkpoint: dict = torch.load(path, map_location=map_location)
 
-    required = {"model_cfg_class", "model_cfg", "model_state_dict", "global_step", "epoch"}
+    required = {"run_cfg_class", "run_cfg", "model_state_dict", "global_step", "epoch"}
     missing = required - checkpoint.keys()
     if missing:
         raise ValueError(f"Not a valid checkpoint, missing keys: {sorted(missing)}, path: {path}")
@@ -93,11 +86,5 @@ def load_checkpoint(
         if optimizer_state is None:
             raise ValueError(f"Checkpoint holds no optimizer state, path: {path}")
         optimizer.load_state_dict(optimizer_state)
-
-    if generator is not None:
-        generator_state = checkpoint.pop("generator_state", None)
-        if generator_state is None:
-            raise ValueError(f"Checkpoint holds no generator state, path: {path}")
-        generator.set_state(generator_state)
 
     return checkpoint
