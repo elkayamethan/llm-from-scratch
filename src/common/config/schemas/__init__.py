@@ -3,9 +3,10 @@ from pydantic import BaseModel
 from common.config.schemas.GPT import GPTConfig
 from common.config.schemas.transformer import TransformerConfig
 from common.config.schemas.training import TrainingConfig
+from common.config.schemas.run import RunConfig
 
 CONFIG_REGISTRY: dict[str, type[BaseModel]] = {
-    cls.__name__: cls for cls in (GPTConfig, TransformerConfig, TrainingConfig)
+    cls.__name__: cls for cls in (GPTConfig, TransformerConfig, TrainingConfig, RunConfig)
 }
 
 
@@ -17,4 +18,4 @@ def config_class(name: str) -> type[BaseModel]:
         raise ValueError(f"unknown config class, received: {name}") from None
 
 
-__all__ = ["GPTConfig", "TransformerConfig", "TrainingConfig", "CONFIG_REGISTRY", "config_class"]
+__all__ = ["GPTConfig", "TransformerConfig", "TrainingConfig", "RunConfig", "CONFIG_REGISTRY", "config_class"]

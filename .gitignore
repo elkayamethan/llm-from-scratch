@@ -6,3 +6,6 @@ __pycache__/
 
 CLAUDE.md
 docs/
+
+datasets/
+checkpoints/
