@@ -102,6 +102,8 @@ def train(
             "step_loss": [],
             "tokens_per_sec": [],
         }
+    else:
+        history = {key: list(values) for key, values in history.items()}
 
     eval_train_dataloader = _as_eval_loader(train_dataloader)
     eval_val_dataloader = _as_eval_loader(val_dataloader)

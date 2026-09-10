@@ -26,6 +26,18 @@ def test_betas_validated(betas: tuple[float, float]) -> None:
         TrainingConfig(**_training_kwargs(), betas=betas)
 
 
+@pytest.mark.parametrize("checkpoint_freq, log_freq", [(10, 3), (5, 10)])
+def test_checkpoint_freq_must_be_multiple_of_log_freq(checkpoint_freq: int, log_freq: int) -> None:
+    with pytest.raises(ValidationError, match="log_freq"):
+        TrainingConfig(**{**_training_kwargs(), "checkpoint_freq": checkpoint_freq, "log_freq": log_freq})
+
+
+def test_training_model_validate_returns_instance() -> None:
+    cfg = TrainingConfig.model_validate(_training_kwargs())
+    assert isinstance(cfg, TrainingConfig)
+    assert cfg.checkpoint_freq % cfg.log_freq == 0
+
+
 def test_run_config_from_yaml(tmp_path: Path, tiny_model_cfg) -> None:
     doc = {
         "run_name": "smoke", "seed": 1, "data_dir": "datasets/smoke", "checkpoint_dir": "checkpoints",

@@ -36,3 +36,10 @@ class TrainingConfig(BaseModel):
             raise ValueError(f"betas must each be in [0, 1), received: {self.betas}")
 
         return self
+
+    @model_validator(mode="after")
+    def check_freqs(self) -> "TrainingConfig":
+        if not (self.checkpoint_freq % self.log_freq == 0):
+            raise ValueError(f"log_freq must be a multiple of checkpoint_freq, received: log_freq={self.log_freq}, checkpoint_freq={self.checkpoint_freq}")
+
+        return self
