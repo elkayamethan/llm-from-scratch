@@ -43,7 +43,7 @@ def test_run_config_from_yaml(tmp_path: Path, tiny_model_cfg) -> None:
 def test_run_config_rejects_unknown_key(tiny_model_cfg) -> None:
     with pytest.raises(ValidationError):
         RunConfig(run_name="x", seed=1, data_dir="d", checkpoint_dir="c", model=tiny_model_cfg,
-                  training=_training_kwargs(), tokenizer="gpt2")
+                  training=_training_kwargs(), tokenizer="gpt2") # pyright: ignore[reportCallIssue]
 
 
 def test_registry_has_run_config() -> None:
