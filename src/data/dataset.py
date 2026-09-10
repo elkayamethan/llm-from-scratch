@@ -17,7 +17,7 @@ class _MemmapTokens:
 
         size = path.stat().st_size
         if size % self.dtype.itemsize != 0:
-            raise ValueError(f"file size must be a multiple of the item size, received: {size} bytes at {path} and dtype.itemsize={{self.dtype.itemsize}}")
+            raise ValueError(f"file size must be a multiple of the item size, received: {size} bytes at {path} and dtype.itemsize={self.dtype.itemsize}")
 
         self._length = size // self.dtype.itemsize
         self._array: np.memmap | None = None

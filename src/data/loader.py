@@ -1,7 +1,6 @@
-import torch
-
 from torch import Tensor
 from torch.utils.data import DataLoader
+from data.sampler import ResumableSampler
 from data.dataset import PretrainingDataset
 
 
@@ -15,39 +14,27 @@ def split_corpus(token_ids: Tensor, train_fraction: float) -> tuple[Tensor, Tens
 
 
 def create_pretraining_dataloaders(
-        token_ids: Tensor,
-        train_fraction: float,
+        train_dataset: PretrainingDataset,
+        val_dataset: PretrainingDataset,
         *,
-        context_size: int,
-        train_stride: int,
+        seed: int,
         batch_size: int,
         num_workers: int = 0,
         pin_memory: bool = False,
-        train_generator: torch.Generator | None = None,
 ) -> tuple[DataLoader, DataLoader]:
-    """Splits corpus and returns (training_dataloader, validation_dataloader)"""
-
-    train_token_ids, val_token_ids = split_corpus(token_ids, train_fraction)
-
-    train_dataset = PretrainingDataset(
-        token_ids=train_token_ids,
-        context_size=context_size,
-        stride=train_stride,
-    )
-    val_dataset = PretrainingDataset(
-        token_ids=val_token_ids,
-        context_size=context_size,
-        stride=context_size,
-    )
+    """
+    Returns (train_dataloader, val_dataloader).
+    
+    Note: train uses drop_last and a ResumableSampler.
+    """
 
     train_dataloader = DataLoader(
         dataset=train_dataset,
         batch_size=batch_size,
-        shuffle=True,
         drop_last=True,
         num_workers=num_workers,
         pin_memory=pin_memory,
-        generator=train_generator,
+        sampler=ResumableSampler(len(train_dataset), seed=seed)
     )
     val_dataloader = DataLoader(
         dataset=val_dataset,
