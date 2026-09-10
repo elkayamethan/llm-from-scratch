@@ -13,7 +13,7 @@ class Tokenizer(Protocol):
 
     @property
     def eot_id(self) -> int:
-        "Token id that terminates a document"
+        """Token id that terminates a document"""
         ...
 
     def encode(self, text: str) -> list[int]:
