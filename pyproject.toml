@@ -25,3 +25,6 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = false
+
+[project.scripts]
+prepare-fineweb-edu = "cli.prepare_fineweb_edu:main"

@@ -3,6 +3,7 @@ TODO.txt
 
 .vscode/
 __pycache__/
+.pytest_cache/
 
 CLAUDE.md
 docs/
